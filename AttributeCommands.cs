@@ -5,13 +5,13 @@ namespace Telegram.Bot.AttributeCommands
 {
     public class AttributeCommands
     {
-        private readonly List<MethodInfo> _textCommandsMethods;
-        private readonly List<MethodInfo> _callbackCommandsMethods;
+        private readonly Dictionary<string, MethodInfo> _textCommandsMethods;
+        private readonly Dictionary<string, MethodInfo> _callbackCommandsMethods;
 
         public AttributeCommands()
         {
-            _textCommandsMethods = new List<MethodInfo>();
-            _callbackCommandsMethods = new List<MethodInfo>();
+            _textCommandsMethods = new();
+            _callbackCommandsMethods = new();
         }
 
         public void RegisterTextCommands(Type commandsClass)
@@ -19,19 +19,15 @@ namespace Telegram.Bot.AttributeCommands
             MethodInfo[] methods = commandsClass.GetMethods();
             foreach (MethodInfo method in methods)
             {
-                if (method.GetCustomAttribute<TextCommandAttribute>() is not null)
-                    _textCommandsMethods.Add(method);
+                if (method.GetCustomAttribute<TextCommandAttribute>() != null)
+                {
+                    var commandName = method.GetCustomAttribute<TextCommandAttribute>()!.Command;
+                    if (!_textCommandsMethods.ContainsKey(commandName))
+                        _textCommandsMethods.Add(commandName, method);
+                    else
+                        throw new Exception($"Text command with name {commandName} is already registered.");
+                }
             }
-        }
-
-        public MethodInfo GetTextCommand(string text)
-        {
-            return _textCommandsMethods.FirstOrDefault(m => m.GetCustomAttribute<TextCommandAttribute>()?.Command == text)!;
-        }
-
-        public MethodInfo GetCallbackCommand(string text)
-        {
-            return _callbackCommandsMethods.FirstOrDefault(m => m.GetCustomAttribute<CallbackCommandAttribute>()?.CallbackCommand == text)!;
         }
 
         public void RegisterCallbackCommands(Type commandsClass)
@@ -39,9 +35,43 @@ namespace Telegram.Bot.AttributeCommands
             MethodInfo[] methods = commandsClass.GetMethods();
             foreach (MethodInfo method in methods)
             {
-                if (method.GetCustomAttribute<CallbackCommandAttribute>() is not null)
-                    _callbackCommandsMethods.Add(method);
+                if (method.GetCustomAttribute<CallbackCommandAttribute>() != null)
+                {
+                    var commandName = method.GetCustomAttribute<CallbackCommandAttribute>()!.CallbackCommand;
+                    if (!_callbackCommandsMethods.ContainsKey(commandName))
+                        _callbackCommandsMethods.Add(commandName, method);
+                    else
+                        throw new Exception($"Callback command with name {commandName} is already registered.");
+                }
             }
+        }
+
+        public MethodInfo GetTextCommand(string commandName)
+        {
+            if (_textCommandsMethods.ContainsKey(commandName))
+                return _textCommandsMethods[commandName];
+            else
+                throw new Exception($"Text command with name {commandName} is not registered.");
+        }
+
+        public MethodInfo GetCallbackCommand(string commandName)
+        {
+            if (_callbackCommandsMethods.ContainsKey(commandName))
+                return _callbackCommandsMethods[commandName];
+            else
+                throw new Exception($"Callback command with name {commandName} is not registered.");
+        }
+
+        public async Task ProcessTextCommand(string commandName, object[] invokeArguments)
+        {
+            GetTextCommand(commandName)?.Invoke(this, invokeArguments);
+            await Task.CompletedTask;
+        }
+
+        public async Task ProcessCallbackCommand(string commandName, object[] invokeArguments)
+        {
+            GetCallbackCommand(commandName)?.Invoke(this, invokeArguments);
+            await Task.CompletedTask;
         }
     }
 }
