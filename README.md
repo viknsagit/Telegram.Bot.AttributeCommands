@@ -1,6 +1,6 @@
-# Telegram.Bot.Telegram.Bot.AttributeCommands Library Documentation
+# Telegram.Bot.AttributeCommands Library Documentation
 
-The `Telegram.Bot.Telegram.Bot.AttributeCommands` library provides a streamlined approach to managing and executing text, callback, and reply commands for a Telegram bot. The library utilizes custom attributes to mark and categorize methods, simplifying the registration and processing of commands.
+The `Telegram.Bot.AttributeCommands` library provides a streamlined approach to managing and executing text, callback, and reply commands for a Telegram bot. The library utilizes custom attributes to mark and categorize methods, simplifying the registration and processing of commands.
 
 ## Table of Contents
 
@@ -19,11 +19,11 @@ The `Telegram.Bot.Telegram.Bot.AttributeCommands` library provides a streamlined
 
 ## Introduction
 
-The `Telegram.Bot.Telegram.Bot.AttributeCommands` library offers a convenient solution for managing and processing various types of commands within a Telegram bot. By leveraging custom attributes, the library organizes text, callback, and reply commands, resulting in a more structured and efficient command handling process.
+The `Telegram.Bot.AttributeCommands` library offers a convenient solution for managing and processing various types of commands within a Telegram bot. By leveraging custom attributes, the library organizes text, callback, and reply commands, resulting in a more structured and efficient command handling process.
 
 ## Getting Started
 
-1. Install the `Telegram.Bot.Telegram.Bot.AttributeCommands` library via your preferred package manager.
+1. Install the `Telegram.Bot.AttributeCommands` library via your preferred package manager.
 2. Import necessary namespaces:
 
 ```csharp
@@ -35,7 +35,7 @@ using Telegram.Bot.AttributeCommands;
 using Telegram.Bot.AttributeCommands.Exceptions;
 ```
 
-3. Create an instance of the `Telegram.Bot.Telegram.Bot.AttributeCommands` class to begin managing your commands.
+3. Create an instance of the `Telegram.Bot.AttributeCommands` class to begin managing your commands.
 
 ## Usage
 
