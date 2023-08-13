@@ -1,11 +1,14 @@
 # Telegram.Bot.AttributeCommands Library Documentation
 
-The `Telegram.Bot.AttributeCommands` library provides a streamlined approach to managing and executing text, callback, and reply commands for a Telegram bot. The library utilizes custom attributes to mark and categorize methods, simplifying the registration and processing of commands.
+The `Telegram.Bot.AttributeCommands` library offers a streamlined approach to managing and executing text, callback, and reply commands for a Telegram bot. By utilizing custom attributes to mark and categorize methods, this library simplifies the registration and processing of commands.
 
 ## Table of Contents
 
 - [Introduction](#introduction)
 - [Getting Started](#getting-started)
+  - [Creating Command Classes](#creating-command-classes)
+  - [Registering Commands](#registering-commands)
+  - [Handling Updates](#handling-updates)
 - [Usage](#usage)
   - [Attributes](#attributes)
     - [`TextCommandAttribute`](#textcommandattribute)
@@ -15,37 +18,124 @@ The `Telegram.Bot.AttributeCommands` library provides a streamlined approach to 
     - [`CommandNotFoundException`](#commandnotfoundexception)
     - [`CommandExistsException`](#commandexistsexception)
 - [Example](#example)
+- [Processing Updates](#processing-updates)
 - [Exception Handling](#exception-handling)
 
 ## Introduction
 
-The `Telegram.Bot.AttributeCommands` library offers a convenient solution for managing and processing various types of commands within a Telegram bot. By leveraging custom attributes, the library organizes text, callback, and reply commands, resulting in a more structured and efficient command handling process.
+The **Telegram.Bot.AttributeCommands** library provides an elegant solution for managing and processing different command types within a Telegram bot. By using custom attributes, the library organizes text, callback, and reply commands, leading to a more organized and efficient command handling process.
 
 ## Getting Started
 
-1. Install the `Telegram.Bot.AttributeCommands` library via your preferred package manager.
-2. Import necessary namespaces:
+### Creating Command Classes
+
+To start using the **Telegram.Bot.AttributeCommands** library, create a class to contain your command methods. These methods should be static and marked with the appropriate command attributes.
+
+### Registering Commands
+
+Before utilizing the registered commands, instantiate the `AttributeCommands` class. Depending on your command types, use the `RegisterTextCommands`, `RegisterCallbackCommands`, and `RegisterReplyCommands` methods to register commands from your command class.
+
+Here's an example of registering commands:
 
 ```csharp
-using System;
-using System.Reflection;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.AttributeCommands;
-using Telegram.Bot.AttributeCommands.Exceptions;
+
+public class YourBotClass
+{
+    private readonly TelegramBotClient _botClient;
+    private readonly AttributeCommands _commands;
+
+    public YourBotClass(string botToken)
+    {
+        _botClient = new TelegramBotClient(botToken);
+        _commands = new AttributeCommands();
+
+        // Register your command classes
+        _commands.RegisterTextCommands(typeof(TestCommands));
+        _commands.RegisterCallbackCommands(typeof(TestCommands));
+        _commands.RegisterReplyCommands(typeof(TestCommands));
+    }
+
+    // Other bot handling methods here...
+}
 ```
 
-3. Create an instance of the `Telegram.Bot.AttributeCommands` class to begin managing your commands.
+### Handling Updates
+
+When handling incoming updates in your bot's code, ensure that you invoke the appropriate command processing methods based on the command type received. This guarantees that registered methods with corresponding attributes are invoked correctly.
+
+```csharp
+private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+{
+    switch (update)
+    {
+        case { Message: { } message }:
+            {
+                if (message.ReplyToMessage != null)
+                    await BotOnReplyMessage(message, cts);
+                else if (message.Text != null)
+                    await BotOnMessageReceived(message, cts);
+            }
+
+            break;
+
+        case { CallbackQuery: { } callbackQuery }:
+            await BotOnCallbackQueryReceived(callbackQuery, cts);
+            break;
+
+        default:
+            await UnknownUpdateHandlerAsync(update, cts);
+            break;
+    }
+}
+
+private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationTokenSource cts)
+{
+    try
+    {
+        await _commands.ProcessCommand(callbackQuery.Data!, new object[] { botClient, callbackQuery });
+    }
+    catch (CommandNotFoundException ex)
+    {
+        await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, ex.Message);
+    }
+}
+
+private async Task BotOnMessageReceived(Message message, CancellationTokenSource cts)
+{
+    try
+    {
+        await _commands.ProcessCommand(message.Text!, new object[] { botClient, message });
+    }
+    catch (CommandNotFoundException ex)
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, ex.Message);
+    }
+}
+
+private async Task BotOnReplyMessage(Message message, CancellationTokenSource cts)
+{
+    try
+    {
+        await _commands.ProcessCommand(message.ReplyToMessage!.Text!, new object[] { botClient, message });
+    }
+    catch (CommandNotFoundException ex)
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, ex.Message);
+    }
+}
+```
 
 ## Usage
 
 ### Attributes
 
-The `Telegram.Bot.AttributeCommands` library includes three custom attributes to mark methods as different types of commands.
+The **Telegram.Bot.AttributeCommands** library includes three custom attributes to mark methods as different command types.
 
 #### `TextCommandAttribute`
 
-The `TextCommandAttribute` is used to identify methods as text commands for your Telegram bot.
+Use the `TextCommandAttribute` to identify methods as text commands for your Telegram bot.
 
 ```csharp
 [TextCommand("your_text_command")]
@@ -57,7 +147,7 @@ public static void YourTextCommandMethod(TelegramBotClient client, Update update
 
 #### `CallbackCommandAttribute`
 
-The `CallbackCommandAttribute` is employed for marking methods as callback commands.
+Employ the `CallbackCommandAttribute` to mark methods as callback commands.
 
 ```csharp
 [CallbackCommand("your_callback_command")]
@@ -69,7 +159,7 @@ public static void YourCallbackCommandMethod(TelegramBotClient client, Update up
 
 #### `ReplyCommandAttribute`
 
-The `ReplyCommandAttribute` is used to indicate methods as reply commands.
+Utilize the `ReplyCommandAttribute` to indicate methods as reply commands.
 
 ```csharp
 [ReplyCommand("your_reply_command")]
@@ -81,7 +171,7 @@ public static void YourReplyCommandMethod(TelegramBotClient client, Update updat
 
 ### Exceptions
 
-The `Telegram.Bot.AttributeCommands` library provides custom exceptions for error handling.
+The **Telegram.Bot.AttributeCommands** library provides custom exceptions for error handling.
 
 #### `CommandNotFoundException`
 
@@ -93,11 +183,13 @@ Thrown when trying to register a command with a duplicate name.
 
 ## Example
 
+### [Example Project](https://github.com/viknsagit/Telegram.Bot.AttributeCommandsExamples)
+
 ```csharp
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
-public class YourCommandsClass
+public class TestCommands
 {
     [TextCommand("start")]
     public static void StartCommand(TelegramBotClient client, Update update)
@@ -121,10 +213,10 @@ public class YourCommandsClass
 
 ## Exception Handling
 
-When using the `Telegram.Bot.AttributeCommands` library, handle exceptions to ensure a smooth user experience. Catch `CommandNotFoundException` and `CommandExistsException` exceptions as needed.
+When using the **Telegram.Bot.AttributeCommands** library, handle exceptions to provide a smooth user experience. Catch `CommandNotFoundException` and `CommandExistsException` exceptions as needed.
 
 ---
 
-This comprehensive documentation covers the `Telegram.Bot.AttributeCommands` library, including its custom attributes and exceptions. For more detailed information and usage scenarios, refer to the library's source code and comments.
+This comprehensive documentation covers the **Telegram.Bot.AttributeCommands** library, including its custom attributes and exceptions. For more detailed information and usage scenarios, refer to the library's source code and comments.
 
-Please note that this documentation is provided for informational purposes and may require adjustments based on the specific implementation of your project.
+Please note that this documentation is provided for informational purposes.
