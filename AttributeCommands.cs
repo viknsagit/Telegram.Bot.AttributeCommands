@@ -1,4 +1,4 @@
-﻿using System.Data;using System.Reflection;
+﻿using System.Reflection;
 
 using Telegram.Bot.AttributeCommands.Attributes;using Telegram.Bot.AttributeCommands.Exceptions;
 using Telegram.Bot.Types;namespace Telegram.Bot.AttributeCommands{    public class AttributeCommands    {        private readonly Dictionary<string, MethodInfo> _textCommandsMethods;        private readonly Dictionary<string, MethodInfo> _callbackCommandsMethods;        private readonly Dictionary<string, MethodInfo> _replyCommandsMethods;        public AttributeCommands()        {            _textCommandsMethods = new();            _callbackCommandsMethods = new();            _replyCommandsMethods = new();        }

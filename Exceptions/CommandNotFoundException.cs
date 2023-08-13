@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Telegram.Bot.AttributeCommands.Exceptions
+﻿namespace Telegram.Bot.AttributeCommands.Exceptions
 {
     /// <summary>
     /// Represents an exception that is thrown when a command is not found.
