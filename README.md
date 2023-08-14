@@ -40,6 +40,8 @@ Here's an example of registering commands:
 ```csharp
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.AttributeCommands;
+using Telegram.Bot.AttributeCommands.Exceptions;
 
 public class YourBotClass
 {
