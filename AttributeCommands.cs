@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 
 using Telegram.Bot.AttributeCommands.Attributes;
 using Telegram.Bot.AttributeCommands.Exceptions;
@@ -6,37 +7,22 @@ using Telegram.Bot.Types;
 
 namespace Telegram.Bot.AttributeCommands
 {
-
     /// <summary>
     /// This class provides methods for manipulating attributes.
     /// </summary>
     public class AttributeCommands
     {
-        private readonly Dictionary<string, MethodInfo> _textCommandsMethods;
-        private readonly Dictionary<string, MethodInfo> _callbackCommandsMethods;
-        private readonly Dictionary<string, MethodInfo> _replyCommandsMethods;
+        private readonly Dictionary<string, MethodInfo> _textCommandsMethods = new();
+        private readonly Dictionary<string, MethodInfo> _callbackCommandsMethods = new();
+        private readonly Dictionary<string, MethodInfo> _replyCommandsMethods = new();
 
         /// <summary>
-        /// Constructor for AttributeCommands class.
+        /// Registers commands from the given class.
         /// </summary>
-        /// <returns>
-        /// Initializes the _textCommandsMethods, _callbackCommandsMethods and _replyCommandsMethods fields.
-        /// </returns>
-        public AttributeCommands()
+        /// <param name="CommandsClass">The class containing the commands.</param>
+        public void RegisterCommands(Type CommandsClass)
         {
-            _textCommandsMethods = new();
-            _callbackCommandsMethods = new();
-            _replyCommandsMethods = new();
-        }
-
-
-        /// <summary>
-        /// Registers text commands from a given class.
-        /// </summary>
-        /// <param name="commandsClass">The class containing the text commands.</param>
-        public void RegisterTextCommands(Type commandsClass)
-        {
-            MethodInfo[] methods = commandsClass.GetMethods();
+            MethodInfo[] methods = CommandsClass.GetMethods();
             foreach (MethodInfo method in methods)
             {
                 if (method.GetCustomAttribute<TextCommandAttribute>() != null)
@@ -47,19 +33,6 @@ namespace Telegram.Bot.AttributeCommands
                     else
                         throw new CommandExistsException(commandName);
                 }
-            }
-        }
-
-
-        /// <summary>
-        /// Registers the callback commands from the given class.
-        /// </summary>
-        /// <param name="commandsClass">The class containing the callback commands.</param>
-        public void RegisterCallbackCommands(Type commandsClass)
-        {
-            MethodInfo[] methods = commandsClass.GetMethods();
-            foreach (MethodInfo method in methods)
-            {
                 if (method.GetCustomAttribute<CallbackCommandAttribute>() != null)
                 {
                     var commandName = method.GetCustomAttribute<CallbackCommandAttribute>()!.CallbackCommand;
@@ -68,19 +41,6 @@ namespace Telegram.Bot.AttributeCommands
                     else
                         throw new CommandExistsException(commandName);
                 }
-            }
-        }
-
-
-        /// <summary>
-        /// Registers the reply commands from the specified commands class.
-        /// </summary>
-        /// <param name="commandsClass">The commands class.</param>
-        public void RegisterReplyCommands(Type commandsClass)
-        {
-            MethodInfo[] methods = commandsClass.GetMethods();
-            foreach (MethodInfo method in methods)
-            {
                 if (method.GetCustomAttribute<ReplyCommandAttribute>() != null)
                 {
                     var commandName = method.GetCustomAttribute<ReplyCommandAttribute>()!.ReplyCommand;
@@ -111,24 +71,6 @@ namespace Telegram.Bot.AttributeCommands
         }
 
         /// <summary>
-        /// Processes the command by name.
-        /// </summary>
-        /// <param name="commandName">Name of the command.</param>
-        /// <param name="client">The client.</param>
-        /// <param name="update">The update.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task ProcessCommand(string commandName, TelegramBotClient client, Update update)
-        {
-            MethodInfo? findedMethod = await GetCommandByNameAsync(commandName);
-            if (findedMethod is null)
-                throw new CommandNotFoundException(commandName);
-            else
-                findedMethod.Invoke(this, new object[] { client, update });
-
-            await Task.CompletedTask;
-        }
-
-        /// <summary>
         /// Processes the command with the specified name and arguments.
         /// </summary>
         /// <param name="commandName">Name of the command.</param>
@@ -137,10 +79,25 @@ namespace Telegram.Bot.AttributeCommands
         public async Task ProcessCommand(string commandName, object[] arguments)
         {
             MethodInfo? findedMethod = await GetCommandByNameAsync(commandName);
+
             if (findedMethod is null)
                 throw new CommandNotFoundException(commandName);
             else
+            {
+                var findedArgs = findedMethod.GetParameters();
+                if (findedArgs.Length != arguments.Length)
+                    throw new CommandArgumentsCountError(findedArgs.Length, arguments.Length);
+
+                for (int i = 0; i < findedArgs.Length; i++)
+                {
+                    if (findedArgs[i].ParameterType != arguments[i].GetType())
+                    {
+                        throw new CommandBadArgumentType(findedArgs[i].ParameterType, arguments[i].GetType());
+                    }
+                }
+
                 findedMethod.Invoke(this, arguments);
+            }
 
             await Task.CompletedTask;
         }

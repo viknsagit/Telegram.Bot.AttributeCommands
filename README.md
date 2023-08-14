@@ -17,6 +17,8 @@ The `Telegram.Bot.AttributeCommands` library offers a streamlined approach to ma
   - [Exceptions](#exceptions)
     - [`CommandNotFoundException`](#commandnotfoundexception)
     - [`CommandExistsException`](#commandexistsexception)
+    - [`CommandArgumentsCountError`](#commandargumentscounterror)
+    - [`CommandBadArgumentType`](#commandbadargumenttype)
 - [Example](#example)
 - [Processing Updates](#processing-updates)
 - [Exception Handling](#exception-handling)
@@ -33,15 +35,13 @@ To start using the **Telegram.Bot.AttributeCommands** library, create a class to
 
 ### Registering Commands
 
-Before utilizing the registered commands, instantiate the `AttributeCommands` class. Depending on your command types, use the `RegisterTextCommands`, `RegisterCallbackCommands`, and `RegisterReplyCommands` methods to register commands from your command class.
+Before utilizing the registered commands, instantiate the `AttributeCommands` class. Use the `RegisterCommands` method to register commands from your command class. This method combines the registration of text, callback, and reply commands.
 
 Here's an example of registering commands:
 
 ```csharp
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.AttributeCommands;
-using Telegram.Bot.AttributeCommands.Exceptions;
 
 public class YourBotClass
 {
@@ -54,9 +54,7 @@ public class YourBotClass
         _commands = new AttributeCommands();
 
         // Register your command classes
-        _commands.RegisterTextCommands(typeof(TestCommands));
-        _commands.RegisterCallbackCommands(typeof(TestCommands));
-        _commands.RegisterReplyCommands(typeof(TestCommands));
+        _commands.RegisterCommands(typeof(TestCommands));
     }
 
     // Other bot handling methods here...
@@ -183,9 +181,15 @@ Thrown when attempting to process a non-existent command.
 
 Thrown when trying to register a command with a duplicate name.
 
-## Example
+#### `CommandArgumentsCountError`
 
-### [Example Project](https://github.com/viknsagit/Telegram.Bot.AttributeCommandsExamples)
+Thrown when the number of arguments provided does not match the expected count.
+
+#### `CommandBadArgumentType`
+
+Thrown when the type of an argument provided does not match the expected type.
+
+## Example
 
 ```csharp
 using Telegram.Bot;
@@ -213,9 +217,13 @@ public class TestCommands
 }
 ```
 
+## Processing Updates
+
+When handling incoming updates in your bot's code, make sure to invoke the appropriate `ProcessCommand` method based on the command type received. This ensures that registered methods with corresponding attributes are invoked correctly.
+
 ## Exception Handling
 
-When using the **Telegram.Bot.AttributeCommands** library, handle exceptions to provide a smooth user experience. Catch `CommandNotFoundException` and `CommandExistsException` exceptions as needed.
+When using the **Telegram.Bot.AttributeCommands** library, handle exceptions to provide a smooth user experience. Catch `CommandNotFoundException`, `CommandExistsException`, `CommandArgumentsCountError`, and `CommandBadArgumentType` exceptions as needed.
 
 ---
 
